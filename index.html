@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧐 Zufallsfakt Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🧐 Zufallsfakt Generator</h1>
+        <p>Drücke den Button und erhalte einen zufälligen, völlig unnötigen Fakt!</p>
+
+        <div class="fact-box">
+            <h2 id="fact">Lade einen wahnsinnigen Fakt...</h2>
+        </div>
+
+        <button class="btn" onclick="generateFact()">🎲 Neuer Fakt</button>
+
+        <h2>Hast du einen eigenen Fakt?</h2>
+        <input type="text" id="newFact" placeholder="Dein Fakt hier...">
+        <a id="prLink" target="_blank"><button class="btn">✨ Fakt vorschlagen</button></a>
+    </div>
+</body>
+</html>

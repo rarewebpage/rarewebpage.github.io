@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geheime Zuteilung</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }input, button {
+  margin: 5px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+#nameInputs input {
+  display: block;
+  margin: 5px auto;
+  max-width: 300px;
+  text-align: center;
+}
+
+#cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.card {
+  perspective: 1000px;
+}
+.inner {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* Square */
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+  cursor: pointer;
+}
+.flipped .inner {
+  transform: rotateY(180deg);
+}
+.front, .back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.front {
+  background: #333;
+}
+.back {
+  background: #555;
+  transform: rotateY(180deg);
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#restartBtn {
+  margin-top: 30px;
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+#restartBtn:hover {
+  background-color: #666;
+}
+
+  </style>
+</head>
+<body>
+  <h1>Geheime Zuteilung</h1>  <div id="nameInputs"></div>
+  <button id="addBtn" onclick="addInput()">+ Eingabefeld</button>
+  <button id="startBtn" onclick="startAssignment()">Zuteilen starten</button>  <div id="cards"></div>
+  <button id="restartBtn" class="hidden" onclick="resetAll()">🔄 Neustart</button>  <script>
+    const maxNames = 10;
+    let assignments = {};
+    let names = [];
+
+    function addInput() {
+      const container = document.getElementById('nameInputs');
+      if (container.children.length >= maxNames) return;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = `Name ${container.children.length+1}`;
+      container.appendChild(input);
+    }
+
+    function startAssignment() {
+      const inputs = [...document.querySelectorAll('#nameInputs input')];
+      names = inputs.map(i => i.value.trim()).filter(n => n);
+      if (names.length < 2) { alert('Mindestens 2 Namen!'); return; }
+      const unique = new Set(names);
+      if (unique.size !== names.length) { alert('Namen müssen eindeutig sein!'); return; }
+
+      // Generate derangement
+      let deranged;
+      do {
+        deranged = names.slice().sort(() => Math.random()-0.5);
+      } while (deranged.some((v,i)=>v===names[i]));
+      names.forEach((n,i) => assignments[n]=deranged[i]);
+
+      document.getElementById('nameInputs').style.display = 'none';
+      document.getElementById('addBtn').style.display = 'none';
+      document.getElementById('startBtn').style.display = 'none';
+
+      showCards();
+      document.getElementById('restartBtn').classList.remove('hidden');
+    }
+
+    function showCards() {
+      const container = document.getElementById('cards');
+      container.innerHTML = '';
+      names.forEach(name => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const inner = document.createElement('div');
+        inner.className = 'inner';
+        inner.dataset.state = 'front';
+
+        inner.onclick = () => {
+          if (card.classList.contains('flipped')) {
+            // Already flipped -> remove on second click
+            card.remove();
+          } else {
+            card.classList.add('flipped');
+          }
+        };
+
+        const front = document.createElement('div');
+        front.className = 'front';
+        front.textContent = name;
+
+        const back = document.createElement('div');
+        back.className = 'back';
+        back.textContent = assignments[name];
+
+        inner.append(front, back);
+        card.appendChild(inner);
+        container.appendChild(card);
+      });
+    }
+
+    function resetAll() {
+      assignments = {};
+      names = [];
+      document.getElementById('nameInputs').innerHTML = '';
+      document.getElementById('nameInputs').style.display = 'block';
+      document.getElementById('addBtn').style.display = 'inline-block';
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('cards').innerHTML = '';
+      document.getElementById('restartBtn').classList.add('hidden');
+      addInput(); addInput();
+    }
+
+    window.onload = ()=>{ addInput(); addInput(); };
+  </script></body>
+</html>

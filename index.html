@@ -1,26 +1,170 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧐 Zufallsfakt Generator</title>
-    <link rel="stylesheet" href="styles.css">
-    <script defer src="script.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geheime Zuteilung</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    input, select, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #assignmentDisplay {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+
+    #nameInputs input {
+      display: block;
+      margin: 5px auto;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    #restartBtn {
+      margin-top: 30px;
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    #restartBtn:hover {
+      background-color: #666;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧐 Zufallsfakt Generator</h1>
-        <p>Drücke den Button und erhalte einen zufälligen, völlig unnötigen Fakt!</p>
+  <h1>Geheime Zuteilung</h1>
 
-        <div class="fact-box">
-            <h2 id="fact">Lade einen wahnsinnigen Fakt...</h2>
-        </div>
+  <div id="nameInputs">
+    <!-- Dynamisch generierte Eingabefelder -->
+  </div>
 
-        <button class="btn" onclick="generateFact()">🎲 Neuer Fakt</button>
+  <button onclick="generateInputs()">+ Eingabefelder hinzufügen</button>
+  <button onclick="startAssignment()">Zuteilen starten</button>
 
-        <h2>Hast du einen eigenen Fakt?</h2>
-        <input type="text" id="newFact" placeholder="Dein Fakt hier...">
-        <a id="prLink" target="_blank"><button class="btn">✨ Fakt vorschlagen</button></a>
-    </div>
+  <div id="selectorArea" class="hidden">
+    <h2>Wer bist du?</h2>
+    <select id="nameSelector">
+      <option value="">-- Wähle deinen Namen --</option>
+    </select>
+    <button onclick="revealAssignment()">Zuteilung anzeigen</button>
+    <div id="assignmentDisplay"></div>
+  </div>
+
+  <button id="restartBtn" class="hidden" onclick="resetAll()">🔄 Neustart</button>
+
+  <script>
+    let maxNames = 10;
+    let assignments = {};
+    let allNames = [];
+
+    function generateInputs() {
+      const container = document.getElementById("nameInputs");
+      const inputs = container.getElementsByTagName("input");
+      if (inputs.length >= maxNames) {
+        alert("Maximal 10 Namen erlaubt.");
+        return;
+      }
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Name " + (inputs.length + 1);
+      container.appendChild(input);
+    }
+
+    function startAssignment() {
+      const inputs = Array.from(document.querySelectorAll("#nameInputs input"));
+      const names = inputs.map(i => i.value.trim()).filter(n => n !== "");
+
+      if (names.length < 2) {
+        alert("Bitte mindestens 2 Namen eingeben.");
+        return;
+      }
+
+      const uniqueNames = [...new Set(names)];
+      if (uniqueNames.length !== names.length) {
+        alert("Alle Namen müssen eindeutig sein.");
+        return;
+      }
+
+      // Fisher-Yates Shuffle, mit Selbstzuteilung vermeiden
+      let receivers = [...names];
+      let shuffled;
+      let attempts = 0;
+      do {
+        shuffled = receivers.slice();
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        attempts++;
+        if (attempts > 100) {
+          alert("Fehler bei der Zuteilung. Bitte erneut versuchen.");
+          return;
+        }
+      } while (shuffled.some((name, i) => name === names[i]));
+
+      assignments = {};
+      names.forEach((name, i) => {
+        assignments[name] = shuffled[i];
+      });
+
+      allNames = names;
+
+      const selector = document.getElementById("nameSelector");
+      selector.innerHTML = '<option value="">-- Wähle deinen Namen --</option>';
+      names.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        selector.appendChild(option);
+      });
+
+      document.getElementById("selectorArea").classList.remove("hidden");
+      document.getElementById("restartBtn").classList.remove("hidden");
+    }
+
+    function revealAssignment() {
+      const selected = document.getElementById("nameSelector").value;
+      const display = document.getElementById("assignmentDisplay");
+      if (!selected) {
+        display.textContent = "Bitte deinen Namen wählen.";
+        return;
+      }
+      display.textContent = `Du bist zugeteilt an: ${assignments[selected]}`;
+    }
+
+    function resetAll() {
+      document.getElementById("nameInputs").innerHTML = "";
+      document.getElementById("selectorArea").classList.add("hidden");
+      document.getElementById("restartBtn").classList.add("hidden");
+      document.getElementById("assignmentDisplay").textContent = "";
+      generateInputs();
+      generateInputs(); // 2 Felder als Start
+    }
+
+    // Starte mit 2 Eingabefeldern
+    window.onload = () => {
+      generateInputs();
+      generateInputs();
+    };
+  </script>
 </body>
 </html>

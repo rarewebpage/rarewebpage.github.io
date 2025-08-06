@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Geheime Zuteilung</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+
+    .input-container, .assignment-container {
+      margin: 20px 0;
+    }
+
+    #inputs {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      margin: 5px;
+      padding: 12px;
+      font-size: 16px;
+      width: 90%;
+      max-width: 300px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      margin: 10px 5px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background-color: #ffcc00;
+      color: black;
+    }
+
+    button:hover {
+      background-color: #e6b800;
+    }
+
+    .card {
+      display: inline-block;
+      width: 90%;
+      max-width: 250px;
+      height: 150px;
+      margin: 10px;
+      perspective: 1000px;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      cursor: pointer;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      padding: 10px;
+    }
+
+    .card-front {
+      background-color: #000;
+      color: white;
+      flex-direction: column;
+    }
+
+    .card-back {
+      background-color: yellow;
+      color: black;
+      transform: rotateY(180deg);
+      flex-direction: column;
+    }
+
+    #secretButton {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #secretOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.95);
+      color: white;
+      display: none;
+      z-index: 1000;
+      padding: 30px;
+      text-align: left;
+      overflow: auto;
+    }
+
+    #secretOverlay pre {
+      white-space: pre-wrap;
+      font-size: 18px;
+    }
+
+    #secretOverlay button {
+      margin-top: 20px;
+      background-color: #ff5555;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="secretButton" title="🕵️ Info halten">🕵️</button>
+
+  <h1>Geheime Zuteilung</h1>
+
+  <div class="input-container" id="inputContainer">
+    <div id="inputs"></div>
+    <button onclick="addNameField()">+ Name</button>
+    <button onclick="startAssignment()">Zuteilen starten</button>
+  </div>
+
+  <div class="assignment-container" id="assignmentContainer"></div>
+
+  <div id="secretOverlay">
+    <h2>Geheime Zuteilung</h2>
+    <pre id="secretList"></pre>
+    <button onclick="document.getElementById('secretOverlay').style.display='none'">Schließen</button>
+  </div>
+
+  <script>
+    let assignments = {};
+
+    function addNameField() {
+      const inputsDiv = document.getElementById('inputs');
+      const currentCount = inputsDiv.getElementsByTagName('input').length;
+      if (currentCount >= 10) return;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = `Name ${currentCount + 1}`;
+      inputsDiv.appendChild(input);
+    }
+
+    function shuffle(array) {
+      let currentIndex = array.length, randomIndex;
+      while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+      }
+      return array;
+    }
+
+    function generateAssignments(names) {
+      let targets;
+      do {
+        targets = shuffle([...names]);
+      } while (names.some((name, i) => name === targets[i]));
+      const result = {};
+      names.forEach((name, i) => result[name] = targets[i]);
+      return result;
+    }
+
+    function startAssignment() {
+      const inputs = document.querySelectorAll('#inputs input');
+      const names = Array.from(inputs).map(input => input.value.trim()).filter(name => name);
+      if (names.length < 2) return alert('Bitte mindestens zwei Namen eingeben.');
+      assignments = generateAssignments(names);
+      document.getElementById('inputContainer').style.display = 'none';
+      const container = document.getElementById('assignmentContainer');
+      container.innerHTML = '';
+
+      names.forEach(name => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">
+              <strong>${name}</strong>
+              <small>zum Aufdecken tippen</small>
+            </div>
+            <div class="card-back">
+              <strong>Deine Person:</strong>
+              <div>${assignments[name]}</div>
+              <small>(nochmal tippen zum Verstecken)</small>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          card.classList.toggle('flipped');
+          if (!card.classList.contains('flipped')) {
+            card.remove();
+          }
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    // Geheimer Button – lang drücken zeigt die Zuteilung, kurz tippen zeigt Info
+    let holdTimer;
+    let longPress = false;
+
+    const secretBtn = document.getElementById('secretButton');
+
+    secretBtn.addEventListener('touchstart', () => {
+      longPress = false;
+      holdTimer = setTimeout(() => {
+        longPress = true;
+        showSecret();
+      }, 2000);
+    });
+
+    secretBtn.addEventListener('touchend', () => {
+      clearTimeout(holdTimer);
+      if (!longPress) {
+        alert('Halte den Button 2 Sekunden, um die geheime Zuteilung zu sehen.');
+      }
+    });
+
+    // Desktop Unterstützung (Maus)
+    secretBtn.addEventListener('mousedown', () => {
+      longPress = false;
+      holdTimer = setTimeout(() => {
+        longPress = true;
+        showSecret();
+      }, 2000);
+    });
+
+    secretBtn.addEventListener('mouseup', () => {
+      clearTimeout(holdTimer);
+      if (!longPress) {
+        alert('Made by Ilija🤪.');
+      }
+    });
+
+    function showSecret() {
+      let text = '';
+      for (let name in assignments) {
+        text += `${name} → ${assignments[name]}\n`;
+      }
+      document.getElementById('secretList').textContent = text;
+      document.getElementById('secretOverlay').style.display = 'block';
+    }
+
+    // Direkt 3 Felder anzeigen
+    for (let i = 0; i < 3; i++) addNameField();
+  </script>
+</body>
+</html>
